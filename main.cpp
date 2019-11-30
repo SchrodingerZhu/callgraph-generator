@@ -19,7 +19,7 @@ namespace {
             std::vector<std::pair<const CallGraphNode *, Function *>> functions{};
             for (auto &i : g) {
                 const CallGraphNode& node = *i.second;
-                if (!node.getFunction() || !finished.contains(node.getFunction()))
+                if (!node.getFunction() || !finished.contains(node.getFunction())) continue;
                 functions.emplace_back(&node, node.getFunction());
             }
 
