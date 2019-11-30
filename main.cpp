@@ -6,6 +6,8 @@
 #include <llvm/IR/LegacyPassManager.h>
 #include <llvm/Transforms/IPO/PassManagerBuilder.h>
 #include <absl/container/flat_hash_set.h>
+#include <sstream>
+
 using namespace llvm;
 namespace {
     struct CallDump : public CallGraphSCCPass {
@@ -14,28 +16,41 @@ namespace {
         CallDump() : CallGraphSCCPass(ID) {}
         bool runOnSCC(CallGraphSCC &SCC) override {
             auto& g = SCC.getCallGraph();
-            for(auto const &i : g) {
+            std::vector<std::pair<const CallGraphNode *, Function *>> functions{};
+            for (auto &i : g) {
                 const CallGraphNode& node = *i.second;
-                Function* function = node.getFunction();
+                functions.emplace_back(&node, node.getFunction());
+            }
+
+#pragma omp parallel for default(shared)
+            for(size_t i = 0; i < functions.size(); i++) {
+                auto * function = functions[i].second;
+                auto & node = *functions[i].first;
+                std::stringstream ss;
                 if(finished.count(function)) continue;
                 if(function)
-                    std::cerr << function->getName().str() << ", ";
+                    ss << function->getName().str() << ", ";
                 else
-                    std::cerr << "<null function>" << ", ";
-                std::cerr << node.getNumReferences();
+                    ss << "<null function>" << ", ";
+                ss << node.getNumReferences();
                 if(auto m = node.size()) {
-                    std::cerr << ", ";
+                    ss << ", ";
                     for (auto &k : node) {
                         m--;
                         auto t = k.second->getFunction();
-                        if (t) std::cerr << t->getName().str();
+                        if (t) ss << t->getName().str();
                         else
-                            std::cerr << "<null function>";
-                        if (m) std::cerr << ", ";
+                            ss << "<null function>";
+                        if (m) ss << ", ";
                     }
                 }
-                std::cerr << std::endl;
-                finished.insert(function);
+                ss << std::endl;
+#pragma omp critical
+                {
+                    std::cerr << ss.str();
+                    std::cerr.flush();
+                    finished.insert(function);
+                }
             }
             return false;
         }
