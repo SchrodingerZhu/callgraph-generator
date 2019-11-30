@@ -3,17 +3,14 @@
 #include <llvm/Analysis/CallGraphSCCPass.h>
 #include <llvm/Analysis/CallGraph.h>
 #include <llvm/IR/Function.h>
-#include <llvm/Support/raw_ostream.h>
 #include <llvm/IR/LegacyPassManager.h>
 #include <llvm/Transforms/IPO/PassManagerBuilder.h>
+#include <absl/container/flat_hash_set.h>
 using namespace llvm;
-
-#include <fstream>
-#include <unordered_set>
 namespace {
     struct CallDump : public CallGraphSCCPass {
         static char ID;
-        static std::unordered_set<Function*> finished;
+        static absl::flat_hash_set<Function*> finished;
         CallDump() : CallGraphSCCPass(ID) {}
         bool runOnSCC(CallGraphSCC &SCC) override {
             auto& g = SCC.getCallGraph();
@@ -45,7 +42,7 @@ namespace {
     };
 
     char CallDump::ID = 0;
-    std::unordered_set<Function*> CallDump::finished{};
+    absl::flat_hash_set<Function*> CallDump::finished{};
     RegisterPass<CallDump> __DUMP_CALL__("dumpcalls", "call graph pass", false, false);
 
     RegisterStandardPasses __DUMP_CALL_PASS__{
