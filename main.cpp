@@ -21,6 +21,7 @@ namespace {
                 const CallGraphNode& node = *i.second;
                 if (!node.getFunction() && !finished.contains(node.getFunction()))
                     functions.emplace_back(&node, node.getFunction());
+                else return false;
             }
 
 #pragma omp parallel for default(shared)
