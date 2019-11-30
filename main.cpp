@@ -13,17 +13,17 @@ namespace {
     struct CallDump : public CallGraphSCCPass {
         static char ID;
         static absl::flat_hash_set<Function*> finished;
+        static bool visited;
         CallDump() : CallGraphSCCPass(ID) {}
         bool runOnSCC(CallGraphSCC &SCC) override {
+            if (visited) { return false; }
             auto& g = SCC.getCallGraph();
             std::vector<std::pair<const CallGraphNode *, Function *>> functions{};
             for (auto &i : g) {
                 const CallGraphNode& node = *i.second;
                 if (!node.getFunction() && !finished.contains(node.getFunction()))
                     functions.emplace_back(&node, node.getFunction());
-                else return false;
             }
-
 #pragma omp parallel for default(shared)
             for(size_t i = 0; i < functions.size(); i++) {
                 auto * function = functions[i].second;
@@ -58,6 +58,7 @@ namespace {
     };
 
     char CallDump::ID = 0;
+    bool CallDump::visited = false;
     absl::flat_hash_set<Function*> CallDump::finished{};
     RegisterPass<CallDump> __DUMP_CALL__("dumpcalls", "call graph pass", false, false);
 
