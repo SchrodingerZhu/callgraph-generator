@@ -19,6 +19,7 @@ namespace {
             std::vector<std::pair<const CallGraphNode *, Function *>> functions{};
             for (auto &i : g) {
                 const CallGraphNode& node = *i.second;
+                if (!node.getFunction() || !finished.contains(node.getFunction()))
                 functions.emplace_back(&node, node.getFunction());
             }
 
@@ -27,7 +28,6 @@ namespace {
                 auto * function = functions[i].second;
                 auto & node = *functions[i].first;
                 std::stringstream ss;
-                if(finished.count(function)) continue;
                 if(function)
                     ss << function->getName().str() << ", ";
                 else
