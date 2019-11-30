@@ -10,7 +10,7 @@ message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLVM_CXX_FLAGS}")
 add_definitions(${LLVM_DEFINITIONS})
 include_directories(${LLVM_INCLUDE_DIRS})
-add_link_options(-L/usr/lib -lLLVM-8)
+add_link_options(-L/usr/lib -lLLVM-9)
 message(${CMAKE_CXX_FLAGS})
 
 include_directories(.)
