@@ -17,6 +17,7 @@ namespace {
         CallDump() : CallGraphSCCPass(ID) {}
         bool runOnSCC(CallGraphSCC &SCC) override {
             if (visited) { return false; }
+            else visited = true;
             auto& g = SCC.getCallGraph();
             std::vector<std::pair<const CallGraphNode *, Function *>> functions{};
             for (auto &i : g) {
