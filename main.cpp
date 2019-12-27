@@ -7,25 +7,28 @@
 #include <llvm/Transforms/IPO/PassManagerBuilder.h>
 #include <absl/container/flat_hash_set.h>
 #include <sstream>
+#include <fstream>
 
 using namespace llvm;
 namespace {
     struct CallDump : public CallGraphSCCPass {
         static char ID;
         static absl::flat_hash_set<Function*> finished;
-        static bool visited;
+        static size_t count;
         CallDump() : CallGraphSCCPass(ID) {}
         bool runOnSCC(CallGraphSCC &SCC) override {
-            if (visited) { return false; }
-            else visited = true;
+            auto env = std::getenv("CALLGRAPH_STORE");
+            if (!env) {return false; }
             auto& g = SCC.getCallGraph();
+            std::cerr << "analyzing at call #" << count << std::endl;
             std::vector<std::pair<const CallGraphNode *, Function *>> functions{};
             for (auto &i : g) {
                 const CallGraphNode& node = *i.second;
                 if (!node.getFunction() && !finished.contains(node.getFunction()))
                     functions.emplace_back(&node, node.getFunction());
             }
-#pragma omp parallel for default(shared)
+            std::cerr << functions.size() << " new functions to go" << count << std::endl;
+#pragma omp parallel for default(shared) schedule(guided)
             for(size_t i = 0; i < functions.size(); i++) {
                 auto * function = functions[i].second;
                 auto & node = *functions[i].first;
@@ -49,8 +52,9 @@ namespace {
                 ss << std::endl;
 #pragma omp critical
                 {
-                    std::cerr << ss.str();
-                    std::cerr.flush();
+                    auto fs = std::ofstream(env);
+                    fs << ss.str();
+                    fs.flush();
                     finished.insert(function);
                 }
             }
@@ -59,7 +63,7 @@ namespace {
     };
 
     char CallDump::ID = 0;
-    bool CallDump::visited = false;
+    size_t CallDump::count = 0;
     absl::flat_hash_set<Function*> CallDump::finished{};
     RegisterPass<CallDump> __DUMP_CALL__("dumpcalls", "call graph pass", false, false);
 
