@@ -19,11 +19,11 @@ namespace {
         bool runOnSCC(CallGraphSCC &SCC) override {
             auto env = std::getenv("CALLGRAPH_STORE");
             if (!env) {return false; }
-            else {
+            else if (count == 0) {
                 std::cerr << "call graph will be stored at " << env << std::endl;
             }
             auto& g = SCC.getCallGraph();
-            std::cerr << "analyzing at call #" << count << std::endl;
+            std::cerr << "analyzing at call #" << count++ << std::endl;
             std::vector<std::pair<const CallGraphNode *, Function *>> functions{};
             for (auto &i : g) {
                 const CallGraphNode& node = *i.second;
