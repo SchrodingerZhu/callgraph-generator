@@ -19,6 +19,9 @@ namespace {
         bool runOnSCC(CallGraphSCC &SCC) override {
             auto env = std::getenv("CALLGRAPH_STORE");
             if (!env) {return false; }
+            else {
+                std::cerr << "call graph will be stored at " << env << std::endl;
+            }
             auto& g = SCC.getCallGraph();
             std::cerr << "analyzing at call #" << count << std::endl;
             std::vector<std::pair<const CallGraphNode *, Function *>> functions{};
@@ -27,7 +30,7 @@ namespace {
                 if (!node.getFunction() && !finished.contains(node.getFunction()))
                     functions.emplace_back(&node, node.getFunction());
             }
-            std::cerr << functions.size() << " new functions to go" << count << std::endl;
+            std::cerr << functions.size() << " new functions to go" << std::endl;
 #pragma omp parallel for default(shared) schedule(guided)
             for(size_t i = 0; i < functions.size(); i++) {
                 auto * function = functions[i].second;
@@ -53,7 +56,7 @@ namespace {
 #pragma omp critical
                 {
                     auto fs = std::ofstream(env);
-                    fs << ss.str();
+                    fs << ss.str() << std::endl;
                     fs.flush();
                     finished.insert(function);
                 }
