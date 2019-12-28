@@ -16,10 +16,10 @@ namespace {
         static absl::flat_hash_set<Function*> finished;
         static size_t count;
         CallDump() : CallGraphSCCPass(ID) {}
-        bool runOnSCC(CallGraphSCC &SCC) override {
+        auto runOnSCC(CallGraphSCC &SCC) -> bool override {
             auto env = std::getenv("CALLGRAPH_STORE");
-            if (!env) {return false; }
-            else if (count == 0) {
+            if (!env) { return false; }
+            else if (count == 0){
                 std::cerr << "call graph will be stored at " << env << std::endl;
             }
             auto& g = SCC.getCallGraph();
